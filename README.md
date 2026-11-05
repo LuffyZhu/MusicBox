@@ -77,4 +77,10 @@ MusicBox 基于 [TVBoxOS-Mobile](https://github.com/XiaoRanLiu3119/TVBoxOS-Mobil
 
 欢迎通过 [Issues](https://github.com/LuffyZhu/MusicBox/issues) 反馈可复现的问题和使用建议。
 
-<!-- 收到维护者的微信、支付宝打赏二维码后，在 README 最底部加入赞赏区。 -->
+## 赞赏 ☕
+
+如果 MusicBox 对你有帮助，欢迎请作者喝杯咖啡。赞赏完全自愿，不影响任何功能的使用。
+
+| 微信赞赏 | 支付宝赞赏 |
+| :---: | :---: |
+| <img src="docs/images/wechat.png" alt="微信赞赏二维码" width="220" /> | <img src="docs/images/alipay.jpg" alt="支付宝赞赏二维码" width="220" /> |
