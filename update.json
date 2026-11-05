@@ -1,8 +1,8 @@
 {
-  "versionCode": 71,
-  "versionName": "0.3.38-alpha",
-  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.38-alpha/MusicBox-TVBox-0.3.38-alpha.apk",
-  "sha256": "770bc7ab62a372415b223df9efad6877993d824adaa1a1e3de649f6399e86e3e",
-  "sizeBytes": 47062555,
-  "notes": "修复夸克下载凭据刷新；分别显示百度与夸克播放失败的状态和主机，便于定位。"
+  "versionCode": 72,
+  "versionName": "0.3.39-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.39-alpha/MusicBox-TVBox-0.3.39-alpha.apk",
+  "sha256": "86ad245ce5328e286679bf9eb2eccff629e4bcc056997c445fef54cb5ebee248",
+  "sizeBytes": 47224330,
+  "notes": "百度网页版音频遇到 HTTP 403 时尝试兼容播放请求；播放失败显示完整错误。"
 }

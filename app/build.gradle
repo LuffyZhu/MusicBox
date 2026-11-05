@@ -8,8 +8,8 @@ android {
         applicationId 'work.musicbox.tvbox'
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 71
-        versionName '0.3.38-alpha'
+        versionCode 72
+        versionName '0.3.39-alpha'
         multiDexEnabled true
         //设置room的Schema的位置
         javaCompileOptions {

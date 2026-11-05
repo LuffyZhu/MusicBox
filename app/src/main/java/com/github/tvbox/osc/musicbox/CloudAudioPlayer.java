@@ -9,6 +9,8 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.OkHttpClient;
 
@@ -39,6 +41,7 @@ final class CloudAudioPlayer {
         player.setRepeatMode(repeat?Player.REPEAT_MODE_ONE:Player.REPEAT_MODE_OFF);
         player.addListener(new Player.Listener() {
             private boolean notified;
+            private boolean triedBaiduPlayerHeader;
             @Override public void onPlaybackStateChanged(int state) {
                 if(state==Player.STATE_READY&&!notified) {
                     notified=true;
@@ -51,10 +54,24 @@ final class CloudAudioPlayer {
                 String message=provider+"音频加载失败，请重试";
                 if(cause instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) {
                     int code=((com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException)cause).responseCode;
+                    if(code==403&&"百度网页版".equals(provider)&&!triedBaiduPlayerHeader){
+                        triedBaiduPlayerHeader=true;
+                        Map<String,String> fallback=new HashMap<>();
+                        fallback.put("User-Agent","netdisk");
+                        OkHttpDataSource.Factory alternate=new OkHttpDataSource.Factory(client)
+                            .setDefaultRequestProperties(fallback);
+                        player.setMediaSource(new ProgressiveMediaSource.Factory(alternate)
+                            .createMediaSource(MediaItem.fromUri(info.url)));
+                        player.prepare();
+                        player.play();
+                        return;
+                    }
                     String host=lastHost.get();
                     message=provider+"音频 HTTP "+code+(host.isEmpty()?"":" · "+host);
                     if(code==401) message+=" · 请重新登录";
-                    else if(code==403) message+=" · 下载请求被拒绝，请检查登录或下载权限";
+                    else if(code==403) message+="百度网页版".equals(provider)
+                        ?" · 已尝试兼容请求，网页版下载仍被拒绝"
+                        :" · 下载请求被拒绝，请检查网盘登录和下载权限";
                 } else if(cause instanceof IOException) message=provider+"连接失败，请检查网络后重试";
                 listener.onError(message);
             }

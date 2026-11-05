@@ -286,7 +286,7 @@ public final class MusicBoxActivity extends Activity {
   try{cloudAudio=new CloudAudioPlayer(this,PersonalCloud.BAIDU.equals(song.source.getKey())?("web".equals(song.playFlag)?"百度网页版":"百度开放平台"):"夸克网盘",info,repeatOne,new CloudAudioPlayer.Listener(){
    public void onReady(long duration){if(token!=lyricGeneration)return;ready=true;if(miniPause!=null)miniPause.setText("Ⅱ");playing.setText(display.title+" · "+display.artist);fetchArtwork(display,info,(int)(duration/1000),token);updateLyricProgress(token);}
    public void onEnded(){if(token==lyricGeneration&&!repeatOne)playRelative(1);}
-   public void onError(String message){if(token==lyricGeneration){ready=false;playing.setText(message);}}
+   public void onError(String message){if(token==lyricGeneration&&!destroyed){ready=false;playing.setText(message);new AlertDialog.Builder(MusicBoxActivity.this).setTitle("网盘播放失败").setMessage(message).setPositiveButton("知道了",null).show();}}
   });
   ui.postDelayed(()->{if(!destroyed&&token==lyricGeneration&&!ready&&cloudAudio!=null&&playing.getText().toString().startsWith("♪  缓冲中")){cloudAudio.release();cloudAudio=null;playing.setText("网盘音频连接超时，请检查登录状态或网络后重试");}},30000);
   }catch(Exception error){playing.setText("网盘播放失败 · "+brief(error));}
@@ -302,7 +302,7 @@ public final class MusicBoxActivity extends Activity {
     try{youtubeAudio=new YouTubeAudioPlayer(this,info,repeatOne,new YouTubeAudioPlayer.Listener(){
      public void onReady(long durationMs){if(token!=lyricGeneration)return;ready=true;playing.setText(currentSong.title+" · "+currentSong.artist);if(miniPause!=null)miniPause.setText("Ⅱ");fetchLyrics(currentSong,(int)Math.max(0,durationMs/1000),token);updateLyricProgress(token);}
      public void onEnded(){if(token==lyricGeneration&&!repeatOne)playRelative(1);}
-     public void onError(String message){if(token==lyricGeneration){ready=false;playing.setText(message);}}
+     public void onError(String message){if(token==lyricGeneration&&!destroyed){ready=false;playing.setText(message);new AlertDialog.Builder(MusicBoxActivity.this).setTitle("网盘播放失败").setMessage(message).setPositiveButton("知道了",null).show();}}
     });}catch(Exception error){playing.setText("无法播放 · "+brief(error));}
    });
   }catch(Throwable error){runOnUiThread(()->{if(!destroyed&&request==playGeneration)playing.setText("无法获取 YouTube 音频 · "+brief(error));});}});
