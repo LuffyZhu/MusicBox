@@ -2,7 +2,7 @@
 
 # 🎵 MusicBox
 
-**把自己的音乐来源，装进一个播放器。**
+**不依赖音乐平台会员，听见更多音乐。**
 
 面向 Android 手机和平板的音乐播放器，基于 [TVBoxOS-Mobile](https://github.com/XiaoRanLiu3119/TVBoxOS-Mobile) 改造。
 
@@ -16,7 +16,7 @@
 
 ## 为什么做 MusicBox
 
-TVBox 的配置可以聚合不同来源，但在手机上听歌时，更需要清晰的搜索结果、方便的播放操作和专注于音乐的界面。MusicBox 因此把 **个人网盘、用户配置的 TVBox 来源、纯音乐和 MV** 放在同一个 Android 播放器里。
+TVBox 的配置不只可以搜索视频，许多来源也能找到歌曲和 MV。MusicBox 把这部分能力放大：**先搜索自己的网盘音乐，再搜索自己配置的 TVBox 来源**，把原本需要打开网盘、翻找目录的听歌过程变成搜索和播放。播放器本身没有会员门槛；实际能听到哪些歌曲，取决于个人网盘、配置源和网络状态。
 
 仓库提供的是播放器本身，**不预置 TVBox 订阅地址、站点清单或第三方爬虫 JAR**。你可以在应用里添加自己的配置源；可搜索到什么、能否播放，取决于所使用的来源和网络状态。
 
@@ -38,7 +38,7 @@ TVBox 的配置可以聚合不同来源，但在手机上听歌时，更需要�
 
 <img src="docs/images/search.jpg" alt="纯音乐与 MV 分类搜索" width="245" />
 <img src="docs/images/player.jpg" alt="沉浸式播放与歌词" width="245" />
-<img src="docs/images/mv.png" alt="MV 播放" width="245" />
+<img src="docs/images/mv.jpg" alt="MV 全屏播放" width="245" />
 
 搜索与分类 · 沉浸式播放 · MV
 

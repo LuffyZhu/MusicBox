@@ -1,8 +1,8 @@
 {
-  "versionCode": 69,
-  "versionName": "0.3.36-alpha",
-  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.36-alpha/MusicBox-TVBox-0.3.36-alpha.apk",
-  "sha256": "b844e5363bd3e87d1060f9e141e73461e740a300e21ccbff1d9f21cac7fcd301",
-  "sizeBytes": 47216049,
-  "notes": "移除预置 TVBox 站点与爬虫 JAR；新增用户配置源入口和在线升级。"
+  "versionCode": 70,
+  "versionName": "0.3.37-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.37-alpha/MusicBox-TVBox-0.3.37-alpha.apk",
+  "sha256": "5f3742bd2caee5ae89ee23e2fd73196cabf38ff5d0673051b5e5e498cdb05b5c",
+  "sizeBytes": 47222399,
+  "notes": "修复个人网盘音频缓冲与歌词加载，修复 MV 横屏退出；更新项目介绍和截图。"
 }
