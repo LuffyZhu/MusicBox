@@ -146,7 +146,9 @@ final class PersonalCloud {
         }else if(QUARK.equals(song.source.getKey())){
             String cookie=p.getString("quark_cookie","").trim();if(cookie.isEmpty())throw new IllegalStateException("请先配置夸克 Cookie");
             headers=quarkHeaders(cookie);JSONObject body=new JSONObject();JSONArray ids=new JSONArray();ids.put(song.id);body.put("fids",ids);
-            JSONObject data=request(QUARK_API+"/file/download?pr=ucpro&fr=pc",body,headers,"POST");checkQuark(data);
+            JSONObject data=request(QUARK_API+"/file/download?pr=ucpro&fr=pc",body,headers,"POST",context);checkQuark(data);
+            if(!headers.getOrDefault("Cookie","").contains("__puus="))
+                throw new IllegalStateException("夸克 Cookie 缺少下载所需的 __puus，请重新配置完整 Cookie");
             JSONArray links=data.optJSONArray("data");url=links==null||links.length()==0?"":links.optJSONObject(0).optString("download_url");
         }else throw new IllegalArgumentException("未知个人网盘");
         if(!url.startsWith("http"))throw new IllegalStateException("网盘没有返回可播放直链");
@@ -158,10 +160,35 @@ final class PersonalCloud {
     private static boolean matches(String name,String query){return MusicSearchMatcher.distance(name,query)<100;}
     private static String enc(String value)throws Exception{return URLEncoder.encode(value,"UTF-8");}
     private static JSONObject request(String url,JSONObject body,Map<String,String> headers,String method)throws Exception{
+        return request(url,body,headers,method,null);
+    }
+    private static JSONObject request(String url,JSONObject body,Map<String,String> headers,String method,Context context)throws Exception{
         if(Thread.currentThread().isInterrupted())throw new InterruptedException();
         HttpURLConnection conn=(HttpURLConnection)new URL(url).openConnection();conn.setConnectTimeout(4500);conn.setReadTimeout(6000);conn.setRequestMethod(method);
         for(Map.Entry<String,String> h:headers.entrySet())conn.setRequestProperty(h.getKey(),h.getValue());
         if(body!=null){conn.setDoOutput(true);conn.setRequestProperty("Content-Type","application/json");try(OutputStream stream=conn.getOutputStream()){stream.write(body.toString().getBytes("UTF-8"));}}
-        try{int code=conn.getResponseCode();if(code!=200)throw new IllegalStateException("网盘接口 HTTP "+code);ByteArrayOutputStream bytes=new ByteArrayOutputStream();try(InputStream stream=conn.getInputStream()){byte[] buffer=new byte[8192];int n;while((n=stream.read(buffer))!=-1){if(Thread.currentThread().isInterrupted())throw new InterruptedException();if(bytes.size()+n>2*1024*1024)throw new IllegalStateException("网盘响应过大");bytes.write(buffer,0,n);}}return new JSONObject(bytes.toString("UTF-8"));}finally{conn.disconnect();}
+        try{int code=conn.getResponseCode();if(code!=200)throw new IllegalStateException("网盘接口 HTTP "+code);
+            if(context!=null&&url.startsWith(QUARK_API))refreshQuarkCookie(context,headers,conn);
+            ByteArrayOutputStream bytes=new ByteArrayOutputStream();try(InputStream stream=conn.getInputStream()){byte[] buffer=new byte[8192];int n;while((n=stream.read(buffer))!=-1){if(Thread.currentThread().isInterrupted())throw new InterruptedException();if(bytes.size()+n>2*1024*1024)throw new IllegalStateException("网盘响应过大");bytes.write(buffer,0,n);}}return new JSONObject(bytes.toString("UTF-8"));}finally{conn.disconnect();}
+    }
+    private static void refreshQuarkCookie(Context context,Map<String,String> headers,HttpURLConnection conn){
+        String refreshed="";
+        for(Map.Entry<String,List<String>> entry:conn.getHeaderFields().entrySet()){
+            if(entry.getKey()==null||!"Set-Cookie".equalsIgnoreCase(entry.getKey()))continue;
+            for(String value:entry.getValue()){
+                String pair=value.split(";",2)[0].trim();
+                if(pair.startsWith("__puus=")&&pair.length()>8)refreshed=pair;
+            }
+        }
+        if(refreshed.isEmpty())return;
+        String old=headers.getOrDefault("Cookie","");
+        StringBuilder updated=new StringBuilder();
+        for(String piece:old.split(";")){
+            String pair=piece.trim();
+            if(!pair.isEmpty()&&!pair.startsWith("__puus="))updated.append(pair).append("; ");
+        }
+        updated.append(refreshed);
+        headers.put("Cookie",updated.toString());
+        prefs(context).edit().putString("quark_cookie",updated.toString()).apply();
     }
 }

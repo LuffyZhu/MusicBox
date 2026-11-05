@@ -9,7 +9,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import java.io.IOException;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.OkHttpClient;
 
 /** Streams personal cloud audio with the headers returned by its link resolver. */
@@ -22,9 +22,14 @@ final class CloudAudioPlayer {
 
     private final SimpleExoPlayer player;
 
-    CloudAudioPlayer(Activity activity, MusicSourceBridge.PlaybackInfo info,
+    CloudAudioPlayer(Activity activity, String provider, MusicSourceBridge.PlaybackInfo info,
                      boolean repeat, Listener listener) {
+        AtomicReference<String> lastHost=new AtomicReference<>("");
         OkHttpClient client=new OkHttpClient.Builder()
+            .addNetworkInterceptor(chain->{
+                lastHost.set(chain.request().url().host());
+                return chain.proceed(chain.request());
+            })
             .followRedirects(true).followSslRedirects(true).build();
         OkHttpDataSource.Factory network=new OkHttpDataSource.Factory(client)
             .setDefaultRequestProperties(info.headers);
@@ -43,11 +48,14 @@ final class CloudAudioPlayer {
             @Override public void onPlayerError(PlaybackException error) {
                 Throwable cause=error;
                 while(cause.getCause()!=null)cause=cause.getCause();
-                String message="网盘音频加载失败，请重试";
+                String message=provider+"音频加载失败，请重试";
                 if(cause instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) {
                     int code=((com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException)cause).responseCode;
-                    message=(code==401||code==403)?"网盘链接已失效或登录过期，请刷新登录状态后重试":"网盘音频请求失败 (HTTP "+code+")";
-                } else if(cause instanceof IOException) message="网盘连接失败，请检查网络后重试";
+                    String host=lastHost.get();
+                    message=provider+"音频 HTTP "+code+(host.isEmpty()?"":" · "+host);
+                    if(code==401) message+=" · 请重新登录";
+                    else if(code==403) message+=" · 下载请求被拒绝，请检查登录或下载权限";
+                } else if(cause instanceof IOException) message=provider+"连接失败，请检查网络后重试";
                 listener.onError(message);
             }
         });

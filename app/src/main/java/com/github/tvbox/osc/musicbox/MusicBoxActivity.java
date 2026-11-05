@@ -283,7 +283,7 @@ public final class MusicBoxActivity extends Activity {
  private void startCloudPlayer(MusicSourceBridge.Song song,MusicSourceBridge.PlaybackInfo info,MusicSourceBridge.Song display,int token){
   // Lyrics do not depend on a successful audio stream handshake.
   fetchLyrics(display,0,token);
-  try{cloudAudio=new CloudAudioPlayer(this,info,repeatOne,new CloudAudioPlayer.Listener(){
+  try{cloudAudio=new CloudAudioPlayer(this,PersonalCloud.BAIDU.equals(song.source.getKey())?("web".equals(song.playFlag)?"百度网页版":"百度开放平台"):"夸克网盘",info,repeatOne,new CloudAudioPlayer.Listener(){
    public void onReady(long duration){if(token!=lyricGeneration)return;ready=true;if(miniPause!=null)miniPause.setText("Ⅱ");playing.setText(display.title+" · "+display.artist);fetchArtwork(display,info,(int)(duration/1000),token);updateLyricProgress(token);}
    public void onEnded(){if(token==lyricGeneration&&!repeatOne)playRelative(1);}
    public void onError(String message){if(token==lyricGeneration){ready=false;playing.setText(message);}}
