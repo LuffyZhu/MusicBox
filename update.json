@@ -1,0 +1,8 @@
+{
+  "versionCode": 69,
+  "versionName": "0.3.36-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.36-alpha/MusicBox-TVBox-0.3.36-alpha.apk",
+  "sha256": "b844e5363bd3e87d1060f9e141e73461e740a300e21ccbff1d9f21cac7fcd301",
+  "sizeBytes": 47216049,
+  "notes": "移除预置 TVBox 站点与爬虫 JAR；新增用户配置源入口和在线升级。"
+}
