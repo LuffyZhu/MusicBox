@@ -6,6 +6,8 @@ MusicBox 是面向 Android 手机和平板的音乐播放器，基于 [TVBoxOS-M
 
 APK 在本仓库的 Releases 发布。应用内「设置 → 在线升级」读取仓库根目录的 `update.json`，核对版本、文件大小及 SHA-256 后交给 Android 系统确认安装。GitHub 下载在某些网络下可能较慢；更新地址可在应用中自行更换。
 
+维护者发布下一版时参见 [发布步骤](docs/RELEASING.md)。
+
 ## 构建
 
 使用 JDK 17 和 Android SDK Platform 33，在仓库根目录运行 `./gradlew :app:assembleDebug`（Windows 为 `gradlew.bat :app:assembleDebug`）。本地 SDK 路径写入未纳入仓库的 `local.properties`。生成的 APK 位于 `app/build/outputs/apk/debug/`。
