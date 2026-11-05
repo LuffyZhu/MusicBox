@@ -130,8 +130,9 @@ final class PersonalCloud {
             String token=p.getString("baidu_token","").trim(),cookie=p.getString("baidu_cookie","").trim();
             if(!cookie.isEmpty())headers.put("Cookie",cookie);
             if(!token.isEmpty()&&!"web".equals(song.playFlag)){
-                String endpoint="https://pan.baidu.com/rest/2.0/xpan/multimedia?method=filemetas&dlink=1&fsids="+enc("["+song.id+"]")+"&access_token="+enc(token);
+                String endpoint="https://pan.baidu.com/rest/2.0/xpan/multimedia?method=filemetas&openapi=xpansdk&dlink=1&fsids="+enc("["+song.id+"]")+"&access_token="+enc(token);
                 JSONObject data=request(endpoint,null,headers,"GET");JSONArray files=data.optJSONArray("list");
+                if(data.optInt("errno",0)!=0)throw new IllegalStateException("百度开放平台链接返回 "+data.optInt("errno"));
                 url=files==null||files.length()==0?"":files.optJSONObject(0).optString("dlink");
                 if(!url.isEmpty())url+=(url.contains("?")?"&":"?")+"access_token="+enc(token);
                 headers.put("User-Agent","pan.baidu.com");

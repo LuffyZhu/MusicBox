@@ -1,8 +1,8 @@
 {
-  "versionCode": 72,
-  "versionName": "0.3.39-alpha",
-  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.39-alpha/MusicBox-TVBox-0.3.39-alpha.apk",
-  "sha256": "86ad245ce5328e286679bf9eb2eccff629e4bcc056997c445fef54cb5ebee248",
-  "sizeBytes": 47224330,
-  "notes": "百度网页版音频遇到 HTTP 403 时尝试兼容播放请求；播放失败显示完整错误。"
+  "versionCode": 73,
+  "versionName": "0.3.40-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.40-alpha/MusicBox-TVBox-0.3.40-alpha.apk",
+  "sha256": "2c1772d450ee6c5d8910f6eaba40b09fb0642a5564ac167fe3f5e1d5223eaab8",
+  "sizeBytes": 47062555,
+  "notes": "澄清百度网页版音频 HTTP 403，提供开放平台接入入口；改进官方取链参数。"
 }
