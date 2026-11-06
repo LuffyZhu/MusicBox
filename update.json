@@ -1,8 +1,8 @@
 {
-  "versionCode": 79,
-  "versionName": "0.3.46-alpha",
-  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.46-alpha/MBox_v0.3.46-alpha_debug.apk",
-  "sha256": "9e83a29b9c93d8ab78e4f2099e7bd051efa2f1c9381eac7a00c35d87e7bc75ba",
-  "sizeBytes": 47074871,
-  "notes": "百度网盘官方授权改由 HTTPS 服务处理密钥、Token 兑换与续期；保留播放队列和歌单修复。"
+  "versionCode": 80,
+  "versionName": "0.3.47-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.47-alpha/MBox_v0.3.47-alpha_debug.apk",
+  "sha256": "803a0028966299a984fbeaecd6022d5a24dcfaaf6ee5edc38b34cb67cf6ba81a",
+  "sizeBytes": 47255462,
+  "notes": "搜索结果按歌曲相关度排序；移除百度手动 Token 输入；播放页可从多个来源手动选择歌词。"
 }

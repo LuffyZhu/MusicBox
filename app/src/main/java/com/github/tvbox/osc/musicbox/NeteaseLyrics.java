@@ -8,12 +8,46 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 /** Fallback for LRCLIB outages. NetEase's web endpoints are not a stable public API. */
 final class NeteaseLyrics {
     private NeteaseLyrics(){}
+
+    static List<LyricMatcher.Candidate> candidates(LyricMatcher.Query query,int limit)throws Exception{
+        List<LyricMatcher.Candidate> found=new ArrayList<>();
+        if(limit<=0||query.title.isEmpty())return found;
+        String address="https://music.163.com/api/search/get/web?csrf_token=&s="
+            +URLEncoder.encode(query.title,"UTF-8")+"&type=1&offset=0&total=true&limit=30";
+        JSONObject search=new JSONObject(request(address));
+        JSONArray rows=search.optJSONObject("result")==null?null:search.optJSONObject("result").optJSONArray("songs");
+        if(rows==null)return found;
+        List<JSONObject> ranked=new ArrayList<>();
+        for(int i=0;i<rows.length();i++){
+            JSONObject song=rows.optJSONObject(i);if(song==null)continue;
+            JSONObject record=new JSONObject();record.put("trackName",song.optString("name"));
+            record.put("artistName",firstArtist(song));
+            record.put("duration",(int)(song.optLong("duration",song.optLong("dt",0))/1000));
+            if(LyricMatcher.score(query,record)>=60||normalize(song.optString("name")).equals(normalize(query.title)))ranked.add(song);
+        }
+        ranked.sort((a,b)->Integer.compare(candidateScore(query,b),candidateScore(query,a)));
+        for(JSONObject song:ranked){
+            if(found.size()>=limit||Thread.currentThread().isInterrupted())break;
+            long id=song.optLong("id",0);if(id<=0)continue;
+            try{String text=lyricById(id);if(text!=null&&!text.isEmpty())
+                found.add(new LyricMatcher.Candidate("网易云 · "+song.optString("name")+" · "+firstArtist(song),text));
+            }catch(Exception ignored){}
+        }
+        return found;
+    }
+    private static int candidateScore(LyricMatcher.Query query,JSONObject song){
+        try{JSONObject record=new JSONObject();record.put("trackName",song.optString("name"));record.put("artistName",firstArtist(song));
+            record.put("duration",(int)(song.optLong("duration",song.optLong("dt",0))/1000));return LyricMatcher.score(query,record);}
+        catch(Exception ignored){return -1000;}
+    }
 
     static String find(LyricMatcher.Query query)throws Exception{
         if(Thread.currentThread().isInterrupted())throw new InterruptedException();

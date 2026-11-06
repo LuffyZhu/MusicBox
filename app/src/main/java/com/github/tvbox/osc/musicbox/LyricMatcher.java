@@ -8,6 +8,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +25,10 @@ final class LyricMatcher {
         Query(String title,String artist,int seconds,boolean instrumental){
             this.title=title;this.artist=artist;this.seconds=seconds;this.instrumental=instrumental;
         }
+    }
+    static final class Candidate {
+        final String label,text;
+        Candidate(String label,String text){this.label=label;this.text=text;}
     }
     private LyricMatcher(){}
 
@@ -107,6 +113,28 @@ final class LyricMatcher {
         return result;
     }
     private static boolean isFound(String result){return result!=null&&!result.startsWith("暂未")&&!result.startsWith("找到多首")&&!result.startsWith("歌词服务")&&!result.startsWith("歌曲名不完整");}
+    static List<Candidate> candidates(String rawTitle,String rawArtist,int seconds)throws Exception{
+        Query query=parse(rawTitle,rawArtist,seconds);
+        List<Candidate> found=new ArrayList<>();
+        if(query.title.isEmpty())return found;
+        try{
+            JSONArray rows=requestArray("https://lrclib.net/api/search?track_name="+enc(query.title));
+            List<JSONObject> ranked=new ArrayList<>();
+            for(int i=0;i<rows.length();i++){
+                JSONObject row=rows.optJSONObject(i);
+                if(row!=null&&hasLyrics(row)&&(normalize(row.optString("trackName")).equals(normalize(query.title))||score(query,row)>=60))ranked.add(row);
+            }
+            ranked.sort((a,b)->Integer.compare(score(query,b),score(query,a)));
+            for(JSONObject row:ranked){
+                if(found.size()>=6)break;
+                String text=lyrics(row);
+                if(isFound(text))found.add(new Candidate("LRCLIB · "+row.optString("trackName")+" · "+row.optString("artistName"),text));
+            }
+        }catch(Exception ignored){}
+        if(Thread.currentThread().isInterrupted())throw new InterruptedException();
+        try{found.addAll(NeteaseLyrics.candidates(query,Math.min(4,Math.max(0,8-found.size()))));}catch(Exception ignored){}
+        return found;
+    }
     private static boolean plausibleBracketTitle(String text){String lower=text.toLowerCase(Locale.ROOT);return text.length()>=2&&!lower.matches(".*(mp3|lrc|flac|aac|wav|mv|无损|音乐|歌曲|高清|音质|live|现场|伴奏|资源|网盘).*");}
     private static String findSingle(Query query)throws Exception{
         if(Thread.currentThread().isInterrupted())throw new InterruptedException();
