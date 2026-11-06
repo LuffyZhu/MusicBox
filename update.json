@@ -1,9 +1,9 @@
 {
-  "versionCode": 77,
-  "versionName": "0.3.44-alpha",
-  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.44-alpha/MBox_v0.3.44-alpha_debug.apk",
-  "sha256": "98c419eef10ca9bc9e8d30709a66b6ad13ca46b183b4cfdd943d1ae5b5aa8417",
-  "sizeBytes": 47074867,
-  "notes": "修复播放队列和歌单继续添加；歌词匹配尝试括号歌手线索与去括号歌名。"
+  "versionCode": 78,
+  "versionName": "0.3.45-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.45-alpha/MBox_v0.3.45-alpha_debug.apk",
+  "sha256": "44bf25458ef4a07ec3414c42a91bf3c653778eec1f2d1ae7adba71b9cb2c603d",
+  "sizeBytes": 47074871,
+  "notes": "修复搜索结果自动接续播放、歌单继续添加和括号标题歌词匹配。"
 }
 
