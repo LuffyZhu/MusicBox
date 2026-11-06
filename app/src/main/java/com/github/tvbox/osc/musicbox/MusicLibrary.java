@@ -117,6 +117,7 @@ final class MusicLibrary {
             SourceBean source=null;
             if(PersonalCloud.BAIDU.equals(sourceKey)||PersonalCloud.QUARK.equals(sourceKey))source=PersonalCloud.source(sourceKey);
             else if(YouTubeMv.SOURCE_KEY.equals(sourceKey))source=YouTubeMv.source();
+            else if(FiveSing.SOURCE_KEY.equals(sourceKey))source=FiveSing.source();
             else for(SourceBean candidate:ApiConfig.get().getSourceBeanList())if(sourceKey.equals(candidate.getKey())){source=candidate;break;}
             if(source==null)continue;
             songs.add(new MusicSourceBridge.Song(source,item.optString("id"),item.optString("title"),
@@ -126,3 +127,4 @@ final class MusicLibrary {
         return songs;
     }
 }
+
