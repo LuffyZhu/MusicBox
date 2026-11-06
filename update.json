@@ -1,9 +1,9 @@
 {
-  "versionCode": 76,
-  "versionName": "0.3.43-alpha",
-  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.43-alpha/MBox_v0.3.43-alpha_debug.apk",
-  "sha256": "1f24ce5c1a685824767cec17f76296ed2cf7e09884ca1a114aa7d6b168f802b4",
-  "sizeBytes": 47247563,
-  "notes": "百度网盘开放平台授权、5sing 音乐与歌词封面搜索；测试版。"
+  "versionCode": 77,
+  "versionName": "0.3.44-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.44-alpha/MBox_v0.3.44-alpha_debug.apk",
+  "sha256": "98c419eef10ca9bc9e8d30709a66b6ad13ca46b183b4cfdd943d1ae5b5aa8417",
+  "sizeBytes": 47074867,
+  "notes": "修复播放队列和歌单继续添加；歌词匹配尝试括号歌手线索与去括号歌名。"
 }
 
