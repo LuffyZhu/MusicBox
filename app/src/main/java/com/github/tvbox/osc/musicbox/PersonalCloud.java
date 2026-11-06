@@ -45,18 +45,20 @@ final class PersonalCloud {
         if(Thread.currentThread().isInterrupted())throw new InterruptedException();
         warning.set("");SharedPreferences p=prefs(context);List<MusicSourceBridge.Song> result=new ArrayList<>();Exception last=null;
         String token=p.getString("baidu_token","").trim(),baiduCookie=p.getString("baidu_cookie","").trim();
+        boolean officialConfigured=BaiduOpenAuth.configured(context);
         String quarkCookie=p.getString("quark_cookie","").trim();
-        if(token.isEmpty()&&baiduCookie.isEmpty()&&quarkCookie.isEmpty())return result;
+        if(token.isEmpty()&&!officialConfigured&&baiduCookie.isEmpty()&&quarkCookie.isEmpty())return result;
         ExecutorService pool=Executors.newFixedThreadPool(2);
         CompletionService<CloudBatch> completed=new ExecutorCompletionService<>(pool);
         List<Future<CloudBatch>> tasks=new ArrayList<>();
         try{
-            if(!token.isEmpty()||!baiduCookie.isEmpty())tasks.add(completed.submit(()->{
+            if(!token.isEmpty()||officialConfigured||!baiduCookie.isEmpty())tasks.add(completed.submit(()->{
                 List<MusicSourceBridge.Song> found=new ArrayList<>();
-                try{searchBaidu(keyword,token,baiduCookie,found);}
+                String currentToken=token;
+                try{currentToken=BaiduOpenAuth.accessToken(context);searchBaidu(keyword,currentToken,baiduCookie,found);}
                 catch(Exception first){
                     if(Thread.currentThread().isInterrupted())return new CloudBatch("百度",found,first);
-                    if(token.isEmpty()||baiduCookie.isEmpty())return new CloudBatch("百度",found,first);
+                    if(baiduCookie.isEmpty())return new CloudBatch("百度",found,first);
                     try{found.clear();searchBaidu(keyword,"",baiduCookie,found);}
                     catch(Exception fallback){return new CloudBatch("百度",found,fallback);}
                 }
@@ -127,9 +129,9 @@ final class PersonalCloud {
     static MusicSourceBridge.PlaybackInfo resolve(Context context,MusicSourceBridge.Song song)throws Exception{
         SharedPreferences p=prefs(context);Map<String,String> headers=new HashMap<>();String url;
         if(BAIDU.equals(song.source.getKey())){
-            String token=p.getString("baidu_token","").trim(),cookie=p.getString("baidu_cookie","").trim();
+            String token=BaiduOpenAuth.accessToken(context),cookie=p.getString("baidu_cookie","").trim();
             if(!cookie.isEmpty())headers.put("Cookie",cookie);
-            if(!token.isEmpty()&&!"web".equals(song.playFlag)){
+            if(!token.isEmpty()){
                 String endpoint="https://pan.baidu.com/rest/2.0/xpan/multimedia?method=filemetas&openapi=xpansdk&dlink=1&fsids="+enc("["+song.id+"]")+"&access_token="+enc(token);
                 JSONObject data=request(endpoint,null,headers,"GET");JSONArray files=data.optJSONArray("list");
                 if(data.optInt("errno",0)!=0)throw new IllegalStateException("百度开放平台链接返回 "+data.optInt("errno"));

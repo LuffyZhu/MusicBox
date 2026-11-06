@@ -39,6 +39,7 @@
         </activity>
         <activity android:name=".musicbox.ConfigCenterActivity" android:exported="false" />
         <activity android:name=".musicbox.BaiduNativeLoginActivity" android:exported="false" />
+        <activity android:name=".musicbox.BaiduOpenAuthActivity" android:exported="false" />
         <activity
             android:name=".ui.activity.SplashActivity"
             android:exported="false"
