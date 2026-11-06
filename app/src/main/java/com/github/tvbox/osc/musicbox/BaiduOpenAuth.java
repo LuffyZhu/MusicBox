@@ -17,18 +17,19 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-/** Personal Baidu Open Platform OAuth. Credentials never ship in the APK. */
+/** Baidu Open Platform OAuth. The public service keeps the app secret off devices. */
 final class BaiduOpenAuth {
     private static final String PREF="musicbox_baidu_oauth", BLOB="encrypted_auth";
     private static final String ALIAS="MusicBoxBaiduOAuth";
     private static final String BASE="https://openapi.baidu.com";
+    private static final String SERVICE="https://106.14.212.171/musicbox-auth/index.php";
     private BaiduOpenAuth() {}
     static final class Device {
         final String code, userCode, verificationUrl;
         final long expiresAt;
         final int interval;
         Device(JSONObject value){
-            code=value.optString("device_code");userCode=value.optString("user_code");
+            code=value.optString("handle",value.optString("device_code"));userCode=value.optString("user_code");
             verificationUrl=value.optString("verification_url");
             expiresAt=System.currentTimeMillis()+Math.max(1,value.optLong("expires_in",300))*1000;
             interval=Math.max(3,value.optInt("interval",5));
@@ -46,6 +47,34 @@ final class BaiduOpenAuth {
             if(status>=400&&!result.has("error")&&!result.has("errno"))throw new IllegalStateException("百度授权接口 HTTP "+status);
             return result;
         }finally{connection.disconnect();}
+    }
+    private static JSONObject service(JSONObject request)throws Exception{
+        HttpURLConnection connection=(HttpURLConnection)new URL(SERVICE).openConnection();
+        connection.setRequestMethod("POST");connection.setDoOutput(true);
+        connection.setConnectTimeout(8000);connection.setReadTimeout(15000);
+        connection.setRequestProperty("Content-Type","application/json; charset=utf-8");
+        connection.setRequestProperty("Accept","application/json");
+        try{
+            byte[] body=request.toString().getBytes("UTF-8");
+            connection.setFixedLengthStreamingMode(body.length);
+            try(java.io.OutputStream output=connection.getOutputStream()){output.write(body);}
+            int status=connection.getResponseCode();
+            InputStream input=status<400?connection.getInputStream():connection.getErrorStream();
+            if(input==null)throw new IllegalStateException("授权服务 HTTP "+status);
+            ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+            try(InputStream stream=input){byte[] buffer=new byte[4096];int n;while((n=stream.read(buffer))!=-1){if(bytes.size()+n>65536)throw new IllegalStateException("授权响应过大");bytes.write(buffer,0,n);}}
+            JSONObject result=new JSONObject(bytes.toString("UTF-8"));
+            if(status>=500)throw new IllegalStateException("授权服务暂时不可用（HTTP "+status+"）");
+            return result;
+        }finally{connection.disconnect();}
+    }
+    static Device startServer()throws Exception{
+        JSONObject value=service(new JSONObject().put("action","start"));
+        if(value.optString("handle").isEmpty())throw failure(value);
+        return new Device(value);
+    }
+    static JSONObject pollServer(Device device)throws Exception{
+        return service(new JSONObject().put("action","poll").put("handle",device.code));
     }
     static Device start(String appKey)throws Exception{
         JSONObject value=get(BASE+"/oauth/2.0/device/code?response_type=device_code&openapi=xpansdk&client_id="+enc(appKey)+"&scope="+enc("basic,netdisk"));
@@ -95,11 +124,26 @@ final class BaiduOpenAuth {
         value.put("expires_at",System.currentTimeMillis()+Math.max(1,token.optLong("expires_in",2592000))*1000);
         write(context,value);
     }
+    static synchronized void saveServer(Context context,JSONObject token)throws Exception{
+        String access=token.optString("access_token"),refresh=token.optString("refresh_token");
+        if(access.isEmpty()||refresh.isEmpty())throw failure(token);
+        JSONObject value=new JSONObject();value.put("mode","server");
+        value.put("access_token",access);value.put("refresh_token",refresh);
+        value.put("expires_at",System.currentTimeMillis()+Math.max(1,token.optLong("expires_in",2592000))*1000);
+        write(context,value);
+    }
     static synchronized String accessToken(Context context)throws Exception{
         JSONObject value=read(context);String token=value.optString("access_token");
         if(token.isEmpty())return PersonalCloud.prefs(context).getString("baidu_token","").trim();
         if(System.currentTimeMillis()+5*60*1000<value.optLong("expires_at",0))return token;
-        String appKey=value.optString("app_key"),secret=value.optString("secret"),refresh=value.optString("refresh_token");
+        String refresh=value.optString("refresh_token");
+        if("server".equals(value.optString("mode"))){
+            if(refresh.isEmpty())throw new IllegalStateException("百度授权已过期，请重新授权");
+            JSONObject updated=service(new JSONObject().put("action","refresh").put("refresh_token",refresh));
+            if(updated.optString("access_token").isEmpty())throw failure(updated);
+            saveServer(context,updated);return updated.optString("access_token");
+        }
+        String appKey=value.optString("app_key"),secret=value.optString("secret");
         if(appKey.isEmpty()||secret.isEmpty()||refresh.isEmpty())throw new IllegalStateException("百度授权已过期，请重新授权");
         JSONObject updated=get(BASE+"/oauth/2.0/token?grant_type=refresh_token&openapi=xpansdk&refresh_token="+enc(refresh)+"&client_id="+enc(appKey)+"&client_secret="+enc(secret));
         if(updated.optString("access_token").isEmpty())throw failure(updated);

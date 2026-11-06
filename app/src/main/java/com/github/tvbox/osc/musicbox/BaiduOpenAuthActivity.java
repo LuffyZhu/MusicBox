@@ -9,10 +9,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.InputType;
 import android.view.Gravity;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -27,18 +25,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-/** Device-code authorization for a user's own Baidu developer application. */
+/** Device-code authorization through the MusicBox service; no developer key on the device. */
 public final class BaiduOpenAuthActivity extends Activity {
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final Handler ui=new Handler(Looper.getMainLooper());
     private Future<?> task;
-    private EditText appKey,secret;
     private ImageView qr;
     private TextView status,userCode;
     private Button start,open,retryStatus;
     private String verificationUrl="";
     private volatile BaiduOpenAuth.Device currentDevice;
-    private volatile String currentKey="",currentSecret="";
     private int dp(int value){return (int)(value*getResources().getDisplayMetrics().density);}
     private TextView text(String value,int size){TextView result=new TextView(this);result.setText(value);result.setTextSize(size);result.setTextColor(0xffe9eef9);return result;}
     @Override public void onCreate(Bundle state){
@@ -46,35 +42,30 @@ public final class BaiduOpenAuthActivity extends Activity {
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(0xff111827);
         LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(dp(20),dp(22),dp(20),dp(22));scroll.addView(root);setContentView(scroll);
         root.addView(text("百度开放平台授权",24));
-        TextView note=text("请填你在百度开放平台创建的应用的 AppKey 和 SecretKey。它们只在本机加密保存，不会写入公开安装包。AppID、SignKey 都不用填。",14);note.setTextColor(0xffa3b1c6);note.setPadding(0,dp(12),0,dp(16));root.addView(note);
-        appKey=new EditText(this);appKey.setTextColor(Color.WHITE);appKey.setHintTextColor(0xffa3b1c6);appKey.setHint("AppKey");appKey.setSingleLine(true);root.addView(appKey);
-        secret=new EditText(this);secret.setTextColor(Color.WHITE);secret.setHintTextColor(0xffa3b1c6);secret.setHint("SecretKey");secret.setSingleLine(true);secret.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);root.addView(secret);
+        TextView note=text("使用百度网盘账号扫码授权。开发者密钥保存在 MusicBox 授权服务端；本机仅加密保存你的授权 Token。",14);note.setTextColor(0xffa3b1c6);note.setPadding(0,dp(12),0,dp(16));root.addView(note);
         start=new Button(this);start.setText("生成官方授权码");start.setOnClickListener(v->authorize());root.addView(start);
         qr=new ImageView(this);qr.setScaleType(ImageView.ScaleType.FIT_CENTER);LinearLayout.LayoutParams qrParams=new LinearLayout.LayoutParams(-1,dp(280));qrParams.topMargin=dp(12);root.addView(qr,qrParams);
         userCode=text("",20);userCode.setGravity(Gravity.CENTER);root.addView(userCode);
         status=text(BaiduOpenAuth.configured(this)?"已配置官方授权，播放前会自动续期":"尚未授权",15);status.setGravity(Gravity.CENTER);status.setPadding(0,dp(12),0,dp(12));root.addView(status);
         open=new Button(this);open.setText("在本机浏览器打开授权页");open.setEnabled(false);open.setOnClickListener(v->{if(!verificationUrl.isEmpty())startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(verificationUrl)));});root.addView(open);
         retryStatus=new Button(this);retryStatus.setText("重新查询授权状态");retryStatus.setEnabled(false);retryStatus.setOnClickListener(v->retryPolling());root.addView(retryStatus);
-        Button clear=new Button(this);clear.setText("清除官方授权");clear.setOnClickListener(v->new AlertDialog.Builder(this).setMessage("清除本机保存的百度开放平台凭据？").setPositiveButton("清除",(dialog,which)->{if(task!=null)task.cancel(true);currentDevice=null;currentKey="";currentSecret="";BaiduOpenAuth.clear(this);verificationUrl="";qr.setImageDrawable(null);userCode.setText("");open.setEnabled(false);retryStatus.setEnabled(false);start.setEnabled(true);status.setText("官方授权已清除");}).setNegativeButton("取消",null).show());root.addView(clear);
+        Button clear=new Button(this);clear.setText("清除官方授权");clear.setOnClickListener(v->new AlertDialog.Builder(this).setMessage("清除本机保存的百度网盘授权 Token？").setPositiveButton("清除",(dialog,which)->{if(task!=null)task.cancel(true);currentDevice=null;BaiduOpenAuth.clear(this);verificationUrl="";qr.setImageDrawable(null);userCode.setText("");open.setEnabled(false);retryStatus.setEnabled(false);start.setEnabled(true);status.setText("官方授权已清除");}).setNegativeButton("取消",null).show());root.addView(clear);
     }
     private void message(String value){ui.post(()->{if(!isFinishing()&&!isDestroyed())status.setText(value);});}
     private void authorize(){
-        String key=appKey.getText().toString().trim(),value=secret.getText().toString().trim();
-        if(key.isEmpty()){appKey.setError("请填写 AppKey");return;}
-        if(value.isEmpty()){secret.setError("请填写 SecretKey");return;}
         if(task!=null)task.cancel(true);
-        currentDevice=null;currentKey="";currentSecret="";
+        currentDevice=null;
         start.setEnabled(false);qr.setImageDrawable(null);userCode.setText("");open.setEnabled(false);retryStatus.setEnabled(false);status.setText("正在生成官方授权码…");
         task=worker.submit(()->{
             try{
-                BaiduOpenAuth.Device device=BaiduOpenAuth.start(key);
+                BaiduOpenAuth.Device device=BaiduOpenAuth.startServer();
                 if(Thread.currentThread().isInterrupted())return;
                 if(device.code.isEmpty()||device.verificationUrl.isEmpty())throw new IllegalStateException("百度未返回有效授权码");
                 String url=device.verificationUrl+(device.verificationUrl.contains("?")?"&":"?")+"code="+URLEncoder.encode(device.userCode,"UTF-8");
                 Bitmap image=makeQr(url);
-                currentDevice=device;currentKey=key;currentSecret=value;
+                currentDevice=device;
                 ui.post(()->{if(isFinishing()||isDestroyed()||currentDevice!=device)return;qr.setImageBitmap(image);userCode.setText("授权码："+device.userCode);verificationUrl=url;open.setEnabled(true);retryStatus.setEnabled(true);status.setText("请扫码或在本机浏览器授权，完成后会自动查询状态");});
-                pollUntilFinished(device,key,value);
+                pollUntilFinished(device);
             }catch(InterruptedException ignored){Thread.currentThread().interrupt();}
             catch(Exception error){message("授权未完成："+error.getMessage());}
             finally{ui.post(()->{if(!isFinishing()&&!isDestroyed())start.setEnabled(true);});}
@@ -86,17 +77,17 @@ public final class BaiduOpenAuthActivity extends Activity {
         if(task!=null)task.cancel(true);
         status.setText("正在重新查询当前授权码…");
         task=worker.submit(()->{
-            try{pollUntilFinished(device,currentKey,currentSecret);}
+            try{pollUntilFinished(device);}
             catch(InterruptedException ignored){Thread.currentThread().interrupt();}
             catch(Exception error){message("查询授权状态失败："+error.getMessage());}
         });
     }
-    private void pollUntilFinished(BaiduOpenAuth.Device device,String key,String value)throws Exception{
+    private void pollUntilFinished(BaiduOpenAuth.Device device)throws Exception{
         int waitSeconds=device.interval;boolean networkFailed=false;
         while(!Thread.currentThread().isInterrupted()&&System.currentTimeMillis()<device.expiresAt){
             Thread.sleep(waitSeconds*1000L);
             JSONObject result;
-            try{result=BaiduOpenAuth.poll(key,value,device);}
+            try{result=BaiduOpenAuth.pollServer(device);}
             catch(IOException network){
                 if(Thread.currentThread().isInterrupted()||currentDevice!=device)return;
                 networkFailed=true;
@@ -111,7 +102,7 @@ public final class BaiduOpenAuthActivity extends Activity {
                 continue;
             }
             if(result.optString("access_token").isEmpty())throw BaiduOpenAuth.failure(result);
-            BaiduOpenAuth.save(this,key,value,result);
+            BaiduOpenAuth.saveServer(this,result);
             ui.post(()->{if(!isFinishing()&&!isDestroyed()&&currentDevice==device){status.setText("授权成功；搜索和播放将使用官方接口，Token 到期后自动续期");retryStatus.setEnabled(false);}});
             return;
         }
