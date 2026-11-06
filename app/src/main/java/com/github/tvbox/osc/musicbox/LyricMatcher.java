@@ -73,23 +73,36 @@ final class LyricMatcher {
     static String find(String rawTitle,String rawArtist,int seconds)throws Exception{
         Query primary=parse(rawTitle,rawArtist,seconds);
         String result=findSingle(primary);
-        if(isFound(result)||result.startsWith("歌词服务"))return result;
+        if(isFound(result))return result;
+        java.util.regex.Matcher trailing=java.util.regex.Pattern.compile("^(.{1,80}?)\\s*[（(]([^（）()]{2,40})[）)]\\s*$").matcher(primary.title);
+        if(trailing.matches()){
+            String plain=trailing.group(1).trim(),hint=trailing.group(2).trim();
+            if(!plain.isEmpty()){
+                if(primary.artist.isEmpty()&&usableArtist(hint)&&plausibleBracketTitle(hint)){
+                    String hinted=findSingle(new Query(plain,hint,seconds,primary.instrumental));
+                    if(isFound(hinted))return hinted;
+                }
+                String stripped=findSingle(new Query(plain,primary.artist,seconds,primary.instrumental));
+                if(isFound(stripped))return stripped;
+                if(!stripped.startsWith("歌词服务"))result=stripped;
+            }
+        }
         if(!primary.artist.isEmpty()){
             String withoutArtist=findSingle(new Query(primary.title,"",seconds,primary.instrumental));
-            if(isFound(withoutArtist)||withoutArtist.startsWith("歌词服务"))return withoutArtist;
-            result=withoutArtist;
+            if(isFound(withoutArtist))return withoutArtist;
+            if(!withoutArtist.startsWith("歌词服务"))result=withoutArtist;
         }
         java.util.regex.Matcher pair=java.util.regex.Pattern.compile("^(.{2,30}?)\\s*[-–—]\\s*(.{2,30})$").matcher(rawTitle==null?"":rawTitle.trim());
         if(pair.matches()&&!normalize(pair.group(1)).equals(normalize(primary.title))){
             String reversed=findSingle(new Query(pair.group(1).trim(),pair.group(2).trim(),seconds,false));
-            if(isFound(reversed)||reversed.startsWith("歌词服务"))return reversed;
+            if(isFound(reversed))return reversed;
         }
         java.util.regex.Matcher bracket=java.util.regex.Pattern.compile("[\\[【]([^\\]】]{1,60})[\\]】]").matcher(rawTitle==null?"":rawTitle);
         while(bracket.find()){
             String candidate=bracket.group(1).trim();
             if(!plausibleBracketTitle(candidate)||normalize(candidate).equals(normalize(primary.title)))continue;
             String alternate=findSingle(new Query(candidate,primary.artist,seconds,false));
-            if(isFound(alternate)||alternate.startsWith("歌词服务"))return alternate;
+            if(isFound(alternate))return alternate;
         }
         return result;
     }
@@ -230,3 +243,4 @@ final class LyricMatcher {
         return value.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]","");
     }
 }
+
