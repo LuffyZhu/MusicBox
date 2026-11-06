@@ -1,8 +1,9 @@
 {
-  "versionCode": 73,
-  "versionName": "0.3.40-alpha",
-  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.40-alpha/MusicBox-TVBox-0.3.40-alpha.apk",
-  "sha256": "2c1772d450ee6c5d8910f6eaba40b09fb0642a5564ac167fe3f5e1d5223eaab8",
-  "sizeBytes": 47062555,
-  "notes": "澄清百度网页版音频 HTTP 403，提供开放平台接入入口；改进官方取链参数。"
+  "versionCode": 76,
+  "versionName": "0.3.43-alpha",
+  "apkUrl": "https://github.com/LuffyZhu/MusicBox/releases/download/v0.3.43-alpha/MBox_v0.3.43-alpha_debug.apk",
+  "sha256": "1f24ce5c1a685824767cec17f76296ed2cf7e09884ca1a114aa7d6b168f802b4",
+  "sizeBytes": 47247563,
+  "notes": "百度网盘开放平台授权、5sing 音乐与歌词封面搜索；测试版。"
 }
+
